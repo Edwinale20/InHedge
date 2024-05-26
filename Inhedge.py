@@ -30,3 +30,22 @@ st_lottie(lottie_animation, key='hedge_logo', height=300, width=300)
 st.title("Bienvenido a la App de Derivados de InHedge")
 st.subheader("Una herramienta para gestionar y analizar estrategias de cobertura")
 
+# Paso 3: Introducción de InHedge
+st.header("Introducción")
+st.write("""
+InHedge es una empresa especializada en asesoría financiera con un enfoque en coberturas para Commodities y FX.
+Nuestro propósito es ayudar a las empresas a mitigar los riesgos financieros derivados de la volatilidad de precios y las fluctuaciones del tipo de cambio.
+Esta app tiene como objetivo proporcionar herramientas para gestionar y analizar estrategias de cobertura, permitiendo a nuestros clientes tomar decisiones informadas y protegerse contra posibles pérdidas.
+""")
+
+# Espacio para dos animaciones Lottie adicionales
+st.subheader("Animaciones de Estrategias de Cobertura")
+st.write("A continuación, podrás ver dos animaciones que ilustran nuestras estrategias de cobertura:")
+
+# Cargar y mostrar la primera animación Lottie adicional
+lottie_animation_1 = load_lottiefile("animacion1.json")  # Asegúrate de tener un archivo Lottie JSON válido
+st_lottie(lottie_animation_1, key='strategy1', height=200, width=200)
+
+# Cargar y mostrar la segunda animación Lottie adicional
+lottie_animation_2 = load_lottiefile("animacion2.json")  # Asegúrate de tener un archivo Lottie JSON válido
+st_lottie(lottie_animation_2, key='strategy2', height=200, width=200)
