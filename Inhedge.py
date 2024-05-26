@@ -9,7 +9,7 @@ import json
 
 # Paso 2: Diseño de pagina de InHedge
 st.set_page_config(
-    page_title="InHedge  App",
+    page_title="InHedge App",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -21,7 +21,7 @@ def load_lottiefile(filepath: str):
         return json.load(f)
 
 # Cargar la animación Lottie
-lottie_animation = load_lottiefile("/mnt/data/inhedge.json")  # Asegúrate de tener un archivo Lottie JSON válido
+lottie_animation = load_lottiefile("inhedge.json")  # Asegúrate de tener un archivo Lottie JSON válido en el mismo directorio
 
 # Mostrar la animación Lottie en la página
 st_lottie(lottie_animation, key='hedge_logo', height=300, width=300)
@@ -29,3 +29,4 @@ st_lottie(lottie_animation, key='hedge_logo', height=300, width=300)
 # Título de la página
 st.title("Bienvenido a la App de Derivados de InHedge")
 st.subheader("Una herramienta para gestionar y analizar estrategias de cobertura")
+
