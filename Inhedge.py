@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px
+import plotly.graph_objects as go
 from datetime import datetime
 from streamlit_lottie import st_lottie
 import json
@@ -66,8 +66,8 @@ tamano_contrato = 25  # Cada contrato cubre 25 toneladas
 contratos = toneladas_cubrir / tamano_contrato
 
 # Calcular el costo de la cobertura usando el precio del LME y la fórmula del collar
-precio_strike = precio_dia
-costo_total = contratos * precio_strike
+precio_strike = precio_dia  # El precio strike puede ajustarse según la estrategia del collar
+costo_total = contratos * precio_strike * tamano_contrato  # Multiplicar por el tamaño del contrato para el costo total
 
 # Crear dataframe con las especificaciones de la operación
 especificaciones = pd.DataFrame({
@@ -77,28 +77,7 @@ especificaciones = pd.DataFrame({
     "Precio promedio del día": [f"${precio_dia:,.2f} USD"]
 })
 
-# Paso 4: Simulación de la cobertura seleccionada
-resultados = []
-precios_spot = np.arange(precio_dia - 500, precio_dia + 500, 50)
-for spot in precios_spot:
-    perdida_maxima = contratos * max(0, precio_strike - spot)
-    ganancia_maxima = contratos * max(0, spot - precio_strike)
-    ganancia_sin_cobertura = contratos * (spot - precio_strike)
-    resultado_lme = ganancia_sin_cobertura - perdida_maxima
-    ganancia_cobertura = ganancia_maxima - perdida_maxima
-    resultados.append([spot, perdida_maxima, ganancia_maxima, precio_strike, ganancia_sin_cobertura, resultado_lme, ganancia_cobertura])
-
-resultados_df = pd.DataFrame(resultados, columns=["Precio Spot", "Pérdida Máxima", "Ganancia Máxima", "Precio Strike", "Ganancia sin cobertura", "Resultado LME", "Ganancia con cobertura"])
-
-# Mostrar resultados
-st.subheader("Resultados de la Cobertura")
-st.dataframe(resultados_df)
-
-# Gráfica de barras de pérdidas y ganancias
-fig = px.bar(resultados_df, x="Precio Spot", y=["Pérdida Máxima", "Ganancia Máxima"], title="Pérdida y Ganancia Máxima")
-st.plotly_chart(fig)
-
-# Desplegar especificaciones de la operación
+# Mostrar especificaciones de la operación
 st.subheader("📊 Cantidad Cubierta")
 st.write(especificaciones)
 
@@ -106,4 +85,35 @@ st.subheader("📊 Orden de Compra Generada")
 st.write(f"Cantidad a cubrir: {toneladas_cubrir} toneladas en {mes_cobertura}")
 st.write(f"Costo Total de la Cobertura: ${costo_total:,.2f} USD")
 st.write("Estado de la Orden: Confirmada")
+
+# Paso 4: Simulación de la cobertura seleccionada
+resultados = []
+precios_spot = np.arange(precio_dia - 500, precio_dia + 500, 50)
+for spot in precios_spot:
+    perdida_maxima = contratos * max(0, precio_strike - spot) * tamano_contrato
+    ganancia_maxima = contratos * max(0, spot - precio_strike) * tamano_contrato
+    ganancia_sin_cobertura = contratos * (spot - precio_strike) * tamano_contrato
+    resultado_lme = ganancia_sin_cobertura - perdida_maxima
+    ganancia_cobertura = ganancia_maxima - perdida_maxima
+    resultados.append([spot, perdida_maxima, ganancia_maxima, precio_strike, ganancia_sin_cobertura, resultado_lme, ganancia_cobertura])
+
+resultados_df = pd.DataFrame(resultados, columns=["Precio Spot", "Pérdida Máxima", "Ganancia Máxima", "Precio Strike", "Ganancia sin cobertura", "Resultado LME", "Ganancia con cobertura"])
+
+# Mostrar resultados
+st.subheader("📊 Resultados de la Cobertura")
+st.dataframe(resultados_df)
+
+# Gráfica de pérdidas y ganancias
+fig = go.Figure()
+fig.add_trace(go.Bar(x=resultados_df["Precio Spot"], y=resultados_df["Pérdida Máxima"], name="Pérdida Máxima", marker_color='crimson'))
+fig.add_trace(go.Bar(x=resultados_df["Precio Spot"], y=resultados_df["Ganancia Máxima"], name="Ganancia Máxima", marker_color='green'))
+
+fig.update_layout(
+    title="Pérdida y Ganancia Máxima",
+    xaxis_title="Precio Spot",
+    yaxis_title="Valor",
+    barmode='group'
+)
+
+st.plotly_chart(fig)
 
