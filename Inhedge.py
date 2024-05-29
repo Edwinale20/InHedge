@@ -8,7 +8,7 @@ from streamlit_lottie import st_lottie
 import json
 
 # Configuración de la página
-st.set_page_config(page_title="📊 InHedge - Estrategias de Cobertura", page_icon="📊", layout="wide")
+st.set_page_config(page_title="📊 InHedge APP- Estrategias de Cobertura", page_icon="📊", layout="wide")
 
 # Función para cargar una animación Lottie desde un archivo JSON
 @st.cache_data
