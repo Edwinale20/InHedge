@@ -42,6 +42,12 @@ toneladas_a_cubrir = st.number_input("💲 Cantidad a cubrir en toneladas:", min
 # Paso 3: Cargar los precios históricos del aluminio
 precios_aluminio = pd.read_csv("inhedge.csv")
 precios_aluminio['Fecha'] = pd.to_datetime(precios_aluminio['Fecha'])
+
+# Convertir las columnas de precios a numéricas, manejando los valores no numéricos o faltantes
+precios_aluminio['LME Precio'] = pd.to_numeric(precios_aluminio['LME Precio'], errors='coerce')
+precios_aluminio['SHFE Precio'] = pd.to_numeric(precios_aluminio['SHFE Precio'], errors='coerce')
+precios_aluminio['Tipo de cambio'] = pd.to_numeric(precios_aluminio['Tipo de cambio'], errors='coerce')
+
 precios_2023 = precios_aluminio[precios_aluminio['Fecha'].dt.year == 2023]
 
 # Filtrar los precios del mes seleccionado
@@ -104,4 +110,5 @@ if st.button('Simular Estrategia'):
         st.write("**Estado de la Orden:** Confirmada")
 
 # Fin del código
+
 
