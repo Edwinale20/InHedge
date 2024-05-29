@@ -155,3 +155,13 @@ st.write("""
    - Se muestra una tabla con los resultados de la cobertura y una gráfica de barras comparando la pérdida y ganancia máxima.
    - Además, se muestra una tabla y gráfica de la cobertura de divisas, si aplica.
 """)
+
+# Cargar la animación Lottie adicional
+lottie_tarjeta = load_lottiefile("tarjeta.json")
+
+# Mostrar la animación Lottie adicional en el centro de la página usando columnas
+col1, col2, col3 = st.columns([1, 2, 1])
+
+with col2:
+    st_lottie(lottie_tarjeta, key='tarjeta', height=300, width=300)
+
