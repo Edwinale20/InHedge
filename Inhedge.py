@@ -68,7 +68,7 @@ def calcular_cobertura(toneladas, precio_lme, tipo_cambio, precio_ejercicio_comp
         perdida_maxima = max((spot - precio_ejercicio_venta) * toneladas - costo_cobertura, -costo_cobertura)
         ganancia_maxima = max((precio_ejercicio_compra - spot) * toneladas - costo_cobertura, -costo_cobertura)
         resultados.append((spot, perdida_maxima, ganancia_maxima))
-    return costo_cobertura, resultados
+    return costo_cobertura, contratos, resultados
 
 # Paso 5: Calcular la cobertura para el mes seleccionado
 if st.button('Simular Estrategia'):
@@ -80,7 +80,7 @@ if st.button('Simular Estrategia'):
         prima_compra = 1000
         prima_venta = 500
         precios_spot = [2000, 2050, 2100, 2150, 2200, 2250, 2300, 2350, 2400, 2450, 2500, 2550]
-        costo_cobertura, resultados = calcular_cobertura(toneladas_a_cubrir, precio_lme, tipo_cambio, precio_ejercicio_compra, precio_ejercicio_venta, prima_compra, prima_venta, precios_spot)
+        costo_cobertura, contratos, resultados = calcular_cobertura(toneladas_a_cubrir, precio_lme, tipo_cambio, precio_ejercicio_compra, precio_ejercicio_venta, prima_compra, prima_venta, precios_spot)
         
         # Crear un dataframe con los resultados
         df_resultados = pd.DataFrame(resultados, columns=["Precio Spot", "Pérdida Máxima", "Ganancia Máxima"])
@@ -105,13 +105,23 @@ if st.button('Simular Estrategia'):
         fig_line = px.line(df_resultados, x="Precio Spot", y=["Resultado CME", "Ganancia con cobertura"], title="Resultados de CME y Ganancia con Cobertura", labels={"value": "USD", "Precio Spot": "Precio Spot"})
         st.plotly_chart(fig_line, use_container_width=True)
         
+        # Calcular la cantidad de dólares y pesos cubiertos
+        dolares_cubiertos = contratos * precio_ejercicio_compra
+        cubiertos_pesos = dolares_cubiertos * tipo_cambio
+        
+        # Mostrar la cantidad de dólares y pesos cubiertos
+        st.subheader("📉 Cantidad Cubierta")
+        st.write(f"**Dólares cubiertos:** ${dolares_cubiertos:,.2f} USD")
+        st.write(f"**Cantidad cubierta en pesos:** ${cubiertos_pesos:,.2f} MXN")
+        
         # Paso 7: Simulación de una orden de compra
         st.write("### Orden de Compra Generada")
         st.write("**Cantidad a cubrir:**")
         st.write(f"{toneladas_a_cubrir} toneladas en {mes_seleccionado}")
         st.write("**Costo Total de la Cobertura:**")
-        st.write(f"${costo_cobertura} USD")
+        st.write(f"${costo_cobertura:,.2f} USD")
         st.write("**Estado de la Orden:** Confirmada")
 
 # Fin del código
+
 
