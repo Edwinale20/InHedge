@@ -29,13 +29,12 @@ h1 { text-align: center; }
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 400px; /* Ajusta la altura según sea necesario */
 }
 </style>
 <h1>📊 InHedge - Estrategias de Cobertura 📊</h1>
 """, unsafe_allow_html=True)
 
-# Mostrar la animación Lottie en el centro de la página usando columnas
+# Mostrar la animación Lottie en el centro de la página usando div
 st.markdown('<div id="center_logo">', unsafe_allow_html=True)
 st_lottie(lottie_animation, key='hedge_logo', height=300, width=300)
 st.markdown('</div>', unsafe_allow_html=True)
@@ -151,4 +150,5 @@ if submitted:
     df_acciones = pd.DataFrame({'Acciones': acciones, 'Pesos (%)': pesos})
     st.write("### Distribución de Acciones y Pesos")
     st.table(df_acciones)
+
 
