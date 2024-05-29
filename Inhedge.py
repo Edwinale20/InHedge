@@ -133,6 +133,15 @@ df_grafica_fx = df_resultados_fx[['Pérdida Máxima FX', 'Ganancia Máxima FX']]
 fig_fx = px.bar(df_grafica_fx, x=df_grafica_fx.index, y='value', color='variable', barmode='group', title="Pérdida y Ganancia Máxima de Divisas")
 st.plotly_chart(fig_fx, use_container_width=True)
 
+# Cargar la animación Lottie adicional
+lottie_tarjeta = load_lottiefile("tarjeta.json")
+
+# Mostrar la animación Lottie adicional en el centro de la página usando columnas
+col1, col2, col3 = st.columns([1, 2, 1])
+
+with col2:
+    st_lottie(lottie_tarjeta, key='tarjeta', height=300, width=300)
+
 # Explicación del funcionamiento de la cobertura:
 st.write("""
 ### Explicación del Funcionamiento de la Cobertura
@@ -155,13 +164,3 @@ st.write("""
    - Se muestra una tabla con los resultados de la cobertura y una gráfica de barras comparando la pérdida y ganancia máxima.
    - Además, se muestra una tabla y gráfica de la cobertura de divisas, si aplica.
 """)
-
-# Cargar la animación Lottie adicional
-lottie_tarjeta = load_lottiefile("tarjeta.json")
-
-# Mostrar la animación Lottie adicional en el centro de la página usando columnas
-col1, col2, col3 = st.columns([1, 2, 1])
-
-with col2:
-    st_lottie(lottie_tarjeta, key='tarjeta', height=300, width=300)
-
