@@ -2,6 +2,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import json
 from streamlit_lottie import st_lottie
 
@@ -59,47 +60,50 @@ st.subheader(f"📅 Precios del Aluminio en {mes_seleccionado} 2023")
 st.dataframe(precios_mes)
 
 # Paso 4: Definir la fórmula de cobertura con collar
-def calcular_cobertura(toneladas, precio_lme, precio_shfe, tipo_cambio, precio_ejercicio_compra, precio_ejercicio_venta, prima_compra, prima_venta):
+def calcular_cobertura(toneladas, precio_lme, tipo_cambio, precio_ejercicio_compra, precio_ejercicio_venta, prima_compra, prima_venta, precios_spot):
     contratos = toneladas / 25
     costo_cobertura = contratos * (prima_compra - prima_venta) * tipo_cambio
-    perdida_maxima = (precio_lme - precio_ejercicio_venta) * toneladas - costo_cobertura
-    ganancia_maxima = (precio_ejercicio_compra - precio_lme) * toneladas - costo_cobertura
-    return perdida_maxima, ganancia_maxima, costo_cobertura
+    resultados = []
+    for spot in precios_spot:
+        perdida_maxima = max((spot - precio_ejercicio_venta) * toneladas - costo_cobertura, -costo_cobertura)
+        ganancia_maxima = max((precio_ejercicio_compra - spot) * toneladas - costo_cobertura, -costo_cobertura)
+        resultados.append((spot, perdida_maxima, ganancia_maxima))
+    return costo_cobertura, resultados
 
 # Paso 5: Calcular la cobertura para el mes seleccionado
 if st.button('Simular Estrategia'):
     if toneladas_a_cubrir > 0:
         precio_lme = precios_mes['LME Precio'].mean()
-        precio_shfe = precios_mes['SHFE Precio'].mean()
         tipo_cambio = precios_mes['Tipo de cambio'].mean()
         precio_ejercicio_compra = precio_lme * 1.05
         precio_ejercicio_venta = precio_lme * 0.95
         prima_compra = 1000
         prima_venta = 500
-        perdida_maxima, ganancia_maxima, costo_cobertura = calcular_cobertura(toneladas_a_cubrir, precio_lme, precio_shfe, tipo_cambio, precio_ejercicio_compra, precio_ejercicio_venta, prima_compra, prima_venta)
+        precios_spot = [2000, 2050, 2100, 2150, 2200, 2250, 2300, 2350, 2400, 2450, 2500, 2550]
+        costo_cobertura, resultados = calcular_cobertura(toneladas_a_cubrir, precio_lme, tipo_cambio, precio_ejercicio_compra, precio_ejercicio_venta, prima_compra, prima_venta, precios_spot)
         
-        # Mostrar los resultados en un dataframe
-        df_resultados = pd.DataFrame({
-            "Mes": [mes_seleccionado],
-            "Toneladas a cubrir": [toneladas_a_cubrir],
-            "Precio LME": [precio_lme],
-            "Precio SHFE": [precio_shfe],
-            "Tipo de Cambio": [tipo_cambio],
-            "Pérdida Máxima": [perdida_maxima],
-            "Ganancia Máxima": [ganancia_maxima],
-            "Costo Cobertura": [costo_cobertura]
-        })
+        # Crear un dataframe con los resultados
+        df_resultados = pd.DataFrame(resultados, columns=["Precio Spot", "Pérdida Máxima", "Ganancia Máxima"])
+        df_resultados["Precio Strike"] = precio_ejercicio_compra
+        df_resultados["Ganancia sin cobertura"] = (df_resultados["Precio Spot"] - precio_ejercicio_compra) * toneladas_a_cubrir
+        df_resultados["Resultado CME"] = df_resultados["Ganancia sin cobertura"] - costo_cobertura
+        df_resultados["Ganancia con cobertura"] = df_resultados["Ganancia sin cobertura"] + df_resultados["Resultado CME"]
+        
         st.subheader("📊 Resultados de la Cobertura")
         st.dataframe(df_resultados)
         
         # Paso 6: Crear gráficos de resultados
-        # Gráfico de líneas de Pérdida y Ganancia Máxima
-        fig_line = px.line(df_resultados, x="Mes", y=["Pérdida Máxima", "Ganancia Máxima"], title="Pérdida y Ganancia Máxima por Mes", labels={"value": "USD", "Mes": "Mes"})
-        st.plotly_chart(fig_line, use_container_width=True)
-        
-        # Gráfico de barras del Costo de Cobertura
-        fig_bar = px.bar(df_resultados, x="Mes", y="Costo Cobertura", title="Costo de Cobertura por Mes", labels={"Costo Cobertura": "USD", "Mes": "Mes"})
+        # Gráfico de barras de Pérdida y Ganancia Máxima
+        fig_bar = go.Figure(data=[
+            go.Bar(name='Pérdida Máxima', x=df_resultados["Precio Spot"], y=df_resultados["Pérdida Máxima"]),
+            go.Bar(name='Ganancia Máxima', x=df_resultados["Precio Spot"], y=df_resultados["Ganancia Máxima"])
+        ])
+        fig_bar.update_layout(barmode='group', title="Pérdida y Ganancia Máxima por Precio Spot", xaxis_title="Precio Spot", yaxis_title="USD")
         st.plotly_chart(fig_bar, use_container_width=True)
+        
+        # Gráfico de líneas de Resultados CME y Ganancia con Cobertura
+        fig_line = px.line(df_resultados, x="Precio Spot", y=["Resultado CME", "Ganancia con cobertura"], title="Resultados de CME y Ganancia con Cobertura", labels={"value": "USD", "Precio Spot": "Precio Spot"})
+        st.plotly_chart(fig_line, use_container_width=True)
         
         # Paso 7: Simulación de una orden de compra
         st.write("### Orden de Compra Generada")
@@ -110,5 +114,4 @@ if st.button('Simular Estrategia'):
         st.write("**Estado de la Orden:** Confirmada")
 
 # Fin del código
-
 
