@@ -8,7 +8,7 @@ from streamlit_lottie import st_lottie
 import json
 
 # Configuración de la página
-st.set_page_config(page_title="📊 InHedge APP- Estrategias de Cobertura", page_icon="📊", layout="wide")
+st.set_page_config(page_title="📊 InHedge - Estrategias de Cobertura", page_icon="📊", layout="wide")
 
 # Función para cargar una animación Lottie desde un archivo JSON
 @st.cache_data
@@ -37,64 +37,69 @@ with col2:
 
 # Paso 2: Crear un formulario centrado en la página principal para recoger información del usuario
 st.header("📈 Visualización de Estrategias de Cobertura")
-col1, col2, col3 = st.columns([1, 1, 1])
+st.subheader("Ingresa la cantidad de toneladas a cubrir por mes en 2023")
+df_cobertura = pd.DataFrame(columns=["Mes", "Toneladas a cubrir"])
+meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 
-with col2:  # Usar la columna central para los inputs
-    toneladas_cubrir = st.number_input("💲 Cantidad de toneladas de aluminio a cubrir:", min_value=0, step=25, key="toneladas")
-    contratos = toneladas_cubrir / 25
+for mes in meses:
+    toneladas = st.number_input(f"💲 Cantidad a cubrir en {mes}:", min_value=0, step=25, key=mes)
+    df_cobertura = df_cobertura.append({"Mes": mes, "Toneladas a cubrir": toneladas}, ignore_index=True)
 
-# Guardar los valores de entrada en session_state para su uso en otros lugares del script
-st.session_state['toneladas_cubrir'] = toneladas_cubrir
-st.session_state['contratos'] = contratos
+st.dataframe(df_cobertura)
 
-# Paso 3: Definir la fórmula de cobertura con collar
-def calcular_cobertura(toneladas, precio_actual):
-    # Definir los precios de ejercicio de la opción de compra y de la opción de venta
-    precio_ejercicio_compra = precio_actual * 1.05  # 5% por encima del precio actual
-    precio_ejercicio_venta = precio_actual * 0.95   # 5% por debajo del precio actual
+# Paso 3: Cargar los precios históricos del aluminio
+uploaded_file = st.file_uploader("Sube un archivo CSV con los precios del aluminio (2021-2023)", type=["csv"])
+if uploaded_file is not None:
+    precios_aluminio = pd.read_csv(uploaded_file)
+    precios_aluminio['Fecha'] = pd.to_datetime(precios_aluminio['Fecha'])
+    precios_2023 = precios_aluminio[precios_aluminio['Fecha'].dt.year == 2023]
 
-    # Definir la prima (costo) de las opciones
-    prima_compra = 1000  # Ejemplo de prima de compra por contrato
-    prima_venta = 500    # Ejemplo de prima de venta por contrato
+    # Mostrar una tabla con los precios de aluminio en 2023
+    st.subheader("📅 Precios del Aluminio en 2023")
+    st.dataframe(precios_2023)
 
-    # Calcular el costo total de la cobertura
-    costo_cobertura = contratos * (prima_compra - prima_venta)
+    # Paso 4: Definir la fórmula de cobertura con collar
+    def calcular_cobertura(toneladas, precio_actual, precio_ejercicio_compra, precio_ejercicio_venta, prima_compra, prima_venta):
+        contratos = toneladas / 25
+        costo_cobertura = contratos * (prima_compra - prima_venta)
+        perdida_maxima = (precio_actual - precio_ejercicio_venta) * toneladas - costo_cobertura
+        ganancia_maxima = (precio_ejercicio_compra - precio_actual) * toneladas - costo_cobertura
+        return perdida_maxima, ganancia_maxima, costo_cobertura
+
+    # Paso 5: Calcular la cobertura para cada mes de 2023
+    resultados = []
+    for mes in df_cobertura['Mes']:
+        toneladas = df_cobertura.loc[df_cobertura['Mes'] == mes, 'Toneladas a cubrir'].values[0]
+        if toneladas > 0:
+            precio_actual = precios_2023[precios_2023['Fecha'].dt.month == meses.index(mes) + 1]['Precio'].mean()
+            precio_ejercicio_compra = precio_actual * 1.05
+            precio_ejercicio_venta = precio_actual * 0.95
+            prima_compra = 1000
+            prima_venta = 500
+            perdida_maxima, ganancia_maxima, costo_cobertura = calcular_cobertura(toneladas, precio_actual, precio_ejercicio_compra, precio_ejercicio_venta, prima_compra, prima_venta)
+            resultados.append([mes, toneladas, precio_actual, perdida_maxima, ganancia_maxima, costo_cobertura])
     
-    # Calcular la pérdida máxima y ganancia máxima
-    perdida_maxima = (precio_actual - precio_ejercicio_venta) * toneladas - costo_cobertura
-    ganancia_maxima = (precio_ejercicio_compra - precio_actual) * toneladas - costo_cobertura
+    # Mostrar los resultados en un dataframe
+    df_resultados = pd.DataFrame(resultados, columns=["Mes", "Toneladas a cubrir", "Precio Actual", "Pérdida Máxima", "Ganancia Máxima", "Costo Cobertura"])
+    st.subheader("📊 Resultados de la Cobertura")
+    st.dataframe(df_resultados)
 
-    return perdida_maxima, ganancia_maxima, costo_cobertura
+    # Paso 6: Crear gráficos de resultados
+    # Gráfico de líneas de Pérdida y Ganancia Máxima por mes
+    fig_line = px.line(df_resultados, x="Mes", y=["Pérdida Máxima", "Ganancia Máxima"], title="Pérdida y Ganancia Máxima por Mes", labels={"value": "USD", "Mes": "Mes"})
+    st.plotly_chart(fig_line, use_container_width=True)
 
-# Paso 4: Obtener el precio actual del aluminio y realizar cálculos
-# Usar datos de ejemplo para el precio del aluminio
-precio_aluminio_actual = 2500  # Precio por tonelada en USD
-toneladas_cubrir = st.session_state.get('toneladas_cubrir', 0)
+    # Gráfico de barras del Costo de Cobertura por mes
+    fig_bar = px.bar(df_resultados, x="Mes", y="Costo Cobertura", title="Costo de Cobertura por Mes", labels={"Costo Cobertura": "USD", "Mes": "Mes"})
+    st.plotly_chart(fig_bar, use_container_width=True)
 
-perdida_maxima, ganancia_maxima, costo_cobertura = calcular_cobertura(toneladas_cubrir, precio_aluminio_actual)
-
-# Mostrar resultados de la cobertura
-st.write(f"**Cobertura para {toneladas_cubrir} toneladas de aluminio ({contratos} contratos)**")
-st.write(f"- Costo total de la cobertura: ${costo_cobertura:.2f}")
-st.write(f"- Pérdida máxima: ${perdida_maxima:.2f}")
-st.write(f"- Ganancia máxima: ${ganancia_maxima:.2f}")
-
-# Paso 5: Crear una gráfica de la cobertura
-precios = np.linspace(precio_aluminio_actual * 0.8, precio_aluminio_actual * 1.2, 100)
-ganancias = [calcular_cobertura(toneladas_cubrir, precio)[1] for precio in precios]
-fig = px.line(x=precios, y=ganancias, labels={'x': 'Precio del Aluminio', 'y': 'Ganancia de la Cobertura'}, title="Cobertura con Collar para Aluminio")
-st.plotly_chart(fig, use_container_width=True)
-
-# Paso 6: Simulación de una orden de compra
-if st.button('Generar Orden de Compra'):
-    st.write("### Orden de Compra Generada")
-    st.write(f"**Cantidad a cubrir:** {toneladas_cubrir} toneladas")
-    st.write(f"**Contratos:** {contratos}")
-    st.write(f"**Costo Total:** ${costo_cobertura:.2f}")
-    st.write(f"**Pérdida Máxima:** ${perdida_maxima:.2f}")
-    st.write(f"**Ganancia Máxima:** ${ganancia_maxima:.2f}")
-    st.write("**Estado de la Orden:** Confirmada")
+    # Paso 7: Simulación de una orden de compra
+    if st.button('Generar Orden de Compra'):
+        st.write("### Orden de Compra Generada")
+        st.write("**Cantidad a cubrir por mes:**")
+        st.dataframe(df_cobertura)
+        st.write("**Costo Total de la Cobertura:**")
+        st.dataframe(df_resultados[["Mes", "Costo Cobertura"]])
+        st.write("**Estado de la Orden:** Confirmada")
 
 # Fin del código
-
-
