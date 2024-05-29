@@ -40,7 +40,7 @@ st.header("📈 Visualización de Estrategias de Cobertura")
 col1, col2, col3 = st.columns([1, 1, 1])
 
 with col2:  # Usar la columna central para los inputs
-    monto_inversion = st.number_input("💲 Cantidad a invertir inicialmente:", min_value=0, step=1000, key="inversion")
+    monto_inversion = st.number_input("💲 Cantidad a cubrir de Aluminio:", min_value=0, step=1000, key="inversion")
     monto_aportacion = st.number_input("📆 ¿De cuánto serán tus aportaciones mensuales?", min_value=0, step=100, key="aportacion")
     enfoque_inversion = st.selectbox("📝 ¿Cuál es tu objetivo de cobertura?", ["Commodity", "Divisa", "Ambos"])
 
