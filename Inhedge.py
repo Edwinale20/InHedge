@@ -1,8 +1,7 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
+import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime
 from streamlit_lottie import st_lottie
 import json
 
@@ -34,86 +33,89 @@ col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     st_lottie(lottie_animation, key='hedge_logo', height=300, width=300)
 
-# Paso 2: Crear un formulario centrado en la página principal para recoger información del usuario
+# Paso 2: Cargar y procesar datos del CSV
+df = pd.read_csv('inhedge.csv', parse_dates=['Fecha'])
+
+# Paso 3: Recoger la entrada del usuario
 st.header("📈 Visualización de Estrategias de Cobertura")
 col1, col2, col3 = st.columns([1, 1, 1])
 
-with col2:  # Usar la columna central para los inputs
-    toneladas_cubrir = st.number_input("💲 Cantidad a cubrir en toneladas:", min_value=0, step=1, key="toneladas")
-    mes_cobertura = st.selectbox("📅 Selecciona el mes de cobertura:", ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"])
+with col2:
+    monto_inversion = st.number_input("💲 Cantidad a cubrir de Aluminio (en toneladas):", min_value=0, step=25, key="inversion")
+    mes_seleccionado = st.selectbox("📅 Selecciona el mes de cobertura:", ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"])
+    enfoque_inversion = st.selectbox("📝 ¿Cuál es tu objetivo de cobertura?", ["Commodity", "Divisa", "Ambos"])
 
-# Guardar los valores de entrada en session_state para su uso en otros lugares del script
-st.session_state['toneladas_cubrir'] = toneladas_cubrir
-st.session_state['mes_cobertura'] = mes_cobertura
-
-# Paso 3: Cargar los datos del CSV
-df = pd.read_csv('inhedge.csv')
-
-# Convertir la columna Fecha a datetime
-df['Fecha'] = pd.to_datetime(df['Fecha'])
-
-# Filtrar los datos para el mes seleccionado
+# Asignar número del mes seleccionado
 meses = {"Enero": 1, "Febrero": 2, "Marzo": 3, "Abril": 4, "Mayo": 5, "Junio": 6, "Julio": 7, "Agosto": 8, "Septiembre": 9, "Octubre": 10, "Noviembre": 11, "Diciembre": 12}
-mes_seleccionado = meses[mes_cobertura]
-datos_mes = df[df['Fecha'].dt.month == mes_seleccionado]
+mes_num = meses[mes_seleccionado]
 
-# Obtener el precio del quinto día del mes
-precio_dia = datos_mes.iloc[4]['LME Precio']
-fecha_compra = datos_mes.iloc[4]['Fecha']
+# Filtrar datos para el mes seleccionado y obtener el precio del quinto día
+df_mes = df[df['Fecha'].dt.month == mes_num]
+precio_quinto_dia = df_mes.iloc[4]['LME Precio']
+tipo_cambio_quinto_dia = df_mes.iloc[4]['Tipo de cambio']
 
-# Calcular el número de contratos
-tamano_contrato = 25  # Cada contrato cubre 25 toneladas
-contratos = toneladas_cubrir / tamano_contrato
+# Cálculos para la cobertura de aluminio
+contratos = monto_inversion / 25
+precio_strike = precio_quinto_dia
+costo_total_cobertura = contratos * precio_strike
 
-# Calcular el costo de la cobertura usando el precio del LME y la fórmula del collar
-precio_strike = precio_dia  # El precio strike puede ajustarse según la estrategia del collar
-costo_total = contratos * precio_strike * tamano_contrato  # Multiplicar por el tamaño del contrato para el costo total
+# Calcular dólares cubiertos y cantidad cubierta en pesos
+dolares_cubiertos = contratos * precio_strike
+cubiertos_pesos = dolares_cubiertos * tipo_cambio_quinto_dia
 
-# Crear dataframe con las especificaciones de la operación
-especificaciones = pd.DataFrame({
-    "Dólares cubiertos": [f"${costo_total:,.2f} USD"],
-    "Cantidad cubierta en pesos": [f"${costo_total * 18.75:,.2f} MXN"],  # Suponiendo un tipo de cambio de 18.75 MXN/USD
-    "Fecha de compra": [fecha_compra.strftime('%Y-%m-%d')],
-    "Precio promedio del día": [f"${precio_dia:,.2f} USD"]
-})
+# Calcular el precio un mes después para la venta
+df_mes_siguiente = df[df['Fecha'].dt.month == (mes_num % 12) + 1]
+precio_venta = df_mes_siguiente.iloc[4]['LME Precio']
 
-# Mostrar especificaciones de la operación
-st.subheader("📊 Cantidad Cubierta")
-st.write(especificaciones)
+# Calcular los resultados de la cobertura
+precio_spot = [precio_quinto_dia + i * 50 for i in range(-4, 6)]
+resultados_cobertura = []
 
-st.subheader("📊 Orden de Compra Generada")
-st.write(f"Cantidad a cubrir: {toneladas_cubrir} toneladas en {mes_cobertura}")
-st.write(f"Costo Total de la Cobertura: ${costo_total:,.2f} USD")
-st.write("Estado de la Orden: Confirmada")
+for spot in precio_spot:
+    perdida_max = max(0, precio_strike - spot) * contratos * 25
+    ganancia_max = max(0, spot - precio_strike) * contratos * 25
+    ganancia_sin_cobertura = (spot - precio_venta) * contratos * 25
+    resultado_lme = (precio_venta - spot) * contratos * 25
+    ganancia_con_cobertura = ganancia_sin_cobertura + ganancia_max - perdida_max
+    resultados_cobertura.append([spot, perdida_max, ganancia_max, precio_strike, ganancia_sin_cobertura, resultado_lme, ganancia_con_cobertura])
 
-# Paso 4: Simulación de la cobertura seleccionada
-resultados = []
-precios_spot = np.arange(precio_dia - 500, precio_dia + 500, 50)
-for spot in precios_spot:
-    perdida_maxima = contratos * max(0, precio_strike - spot) * tamano_contrato
-    ganancia_maxima = contratos * max(0, spot - precio_strike) * tamano_contrato
-    ganancia_sin_cobertura = contratos * (spot - precio_strike) * tamano_contrato
-    resultado_lme = ganancia_sin_cobertura - perdida_maxima
-    ganancia_cobertura = ganancia_maxima - perdida_maxima
-    resultados.append([spot, perdida_maxima, ganancia_maxima, precio_strike, ganancia_sin_cobertura, resultado_lme, ganancia_cobertura])
+resultados_df = pd.DataFrame(resultados_cobertura, columns=["Precio Spot", "Pérdida Máxima", "Ganancia Máxima", "Precio Strike", "Ganancia sin cobertura", "Resultado LME", "Ganancia con cobertura"])
 
-resultados_df = pd.DataFrame(resultados, columns=["Precio Spot", "Pérdida Máxima", "Ganancia Máxima", "Precio Strike", "Ganancia sin cobertura", "Resultado LME", "Ganancia con cobertura"])
+# Mostrar los resultados
+st.subheader("📈 Resultados de la Cobertura de Aluminio")
+st.write(f"Dólares cubiertos: ${dolares_cubiertos:,.2f} USD")
+st.write(f"Cantidad cubierta en pesos: ${cubiertos_pesos:,.2f} MXN")
+st.write(f"Fecha de compra: {df_mes.iloc[4]['Fecha'].date()}")
+st.write(f"Precio promedio del día: ${precio_quinto_dia:,.2f} USD")
 
-# Mostrar resultados
+if mes_num % 3 == 0:
+    contratos_fx = dolares_cubiertos / 500000
+    costo_total_cobertura_fx = contratos_fx * 500000
+    cubiertos_pesos_fx = dolares_cubiertos * tipo_cambio_quinto_dia
+
+    # Añadir resultados de la cobertura del tipo de cambio
+    st.write(f"Cobertura de tipo de cambio realizada en el mismo periodo.")
+    st.write(f"Dólares CME cubiertos: {contratos_fx:.2f} contratos")
+    st.write(f"Costo de Cobertura FX: ${costo_total_cobertura_fx:,.2f} USD")
+    st.write(f"Cantidad cubierta en pesos por FX: ${cubiertos_pesos_fx:,.2f} MXN")
+
+# Mostrar tabla de resultados
 st.subheader("📊 Resultados de la Cobertura")
-st.dataframe(resultados_df)
+st.write(resultados_df)
 
-# Gráfica de pérdidas y ganancias
+# Gráfico de Pérdida y Ganancia Máxima
 fig = go.Figure()
-fig.add_trace(go.Bar(x=resultados_df["Precio Spot"], y=resultados_df["Pérdida Máxima"], name="Pérdida Máxima", marker_color='crimson'))
-fig.add_trace(go.Bar(x=resultados_df["Precio Spot"], y=resultados_df["Ganancia Máxima"], name="Ganancia Máxima", marker_color='green'))
+fig.add_trace(go.Bar(x=resultados_df["Precio Spot"], y=resultados_df["Pérdida Máxima"], name='Pérdida Máxima', marker_color='indianred'))
+fig.add_trace(go.Bar(x=resultados_df["Precio Spot"], y=resultados_df["Ganancia Máxima"], name='Ganancia Máxima', marker_color='lightsalmon'))
+fig.update_layout(barmode='group', title="Pérdida y Ganancia Máxima", xaxis_title="Precio Spot", yaxis_title="Valor")
+st.plotly_chart(fig, use_container_width=True)
 
-fig.update_layout(
-    title="Pérdida y Ganancia Máxima",
-    xaxis_title="Precio Spot",
-    yaxis_title="Valor",
-    barmode='group'
-)
+# Añadir resultados a la tabla con cobertura de tipo de cambio
+if mes_num % 3 == 0:
+    resultados_df["Dólares CME"] = contratos_fx
+    resultados_df["Costo de Cobertura FX"] = costo_total_cobertura_fx
+    resultados_df["Cubiertos en Pesos FX"] = cubiertos_pesos_fx
 
-st.plotly_chart(fig)
-
+# Mostrar la tabla con los resultados actualizados
+st.write("## Resultados de la Cobertura Actualizada con FX")
+st.write(resultados_df)
