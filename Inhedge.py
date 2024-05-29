@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from streamlit_lottie import st_lottie
 
 # Configuración de la página
 st.set_page_config(page_title="📊 InHedge - Estrategias de Cobertura", page_icon="📊", layout="wide")
@@ -108,3 +109,4 @@ st.table(df_resultados)
 df_grafica = df_resultados[['Pérdida Máxima', 'Ganancia Máxima']].melt(var_name='variable', value_name='value')
 fig = px.bar(df_grafica, x=df_grafica.index, y='value', color='variable', barmode='group', title="Pérdida y Ganancia Máxima")
 st.plotly_chart(fig, use_container_width=True)
+
