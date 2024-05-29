@@ -25,19 +25,15 @@ st.markdown("""
 body { background-color: #EFEEE7; }
 .stButton>button { color: white; background-color: #2596be; }
 h1 { text-align: center; }
-#center_logo {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
 </style>
 <h1>📊 InHedge - Estrategias de Cobertura 📊</h1>
 """, unsafe_allow_html=True)
 
-# Mostrar la animación Lottie en el centro de la página usando div
-st.markdown('<div id="center_logo">', unsafe_allow_html=True)
-st_lottie(lottie_animation, key='hedge_logo', height=300, width=300)
-st.markdown('</div>', unsafe_allow_html=True)
+# Mostrar la animación Lottie en el centro de la página usando columnas
+col1, col2, col3 = st.columns([1, 2, 1])
+
+with col2:
+    st_lottie(lottie_animation, key='hedge_logo', height=300, width=300)
 
 # Paso 2: Crear un formulario centrado en la página principal para recoger información del usuario
 st.header("📈 Visualización de Estrategias de Cobertura")
@@ -129,6 +125,27 @@ def calcular_crecimiento_inversion(aportacion_anual, rendimiento_anual, volatili
         # Aplicar rendimiento ajustado por volatilidad y agregar nueva aportación
         saldo.append(saldo[-1] * (1 + rendimiento_anual - volatilidad) + aportacion_anual)
     return anos, saldo
+
+with st.form("form_inversion"):
+    rendimiento_anual = st.slider("Tasa de Rendimiento Anual (%)", min_value=0.0, max_value=20.0, value=14.81, step=0.01, key="rendimiento")
+    volatilidad = st.slider("Volatilidad Anual (%)", min_value=0.0, max_value=30.0, value=3.36, step=0.01, key="volatilidad")
+    aportacion_mensual = st.number_input("Aportación Mensual ($)", min_value=0, max_value=100000, step=100, value=1000)
+    submitted = st.form_submit_button("Actualizar Inversión")
+
+if submitted:
+    aportacion_anual = aportacion_mensual * 12  # Convertir aportación mensual a anual
+    anos, saldo = calcular_crecimiento_inversion(aportacion_anual, rendimiento_anual / 100, volatilidad / 100)
+
+    fig = px.line(x=anos, y=saldo, labels={'x': 'Año', 'y': 'Monto Acumulado ($)'})
+    fig.update_layout(title="Simulación del Crecimiento de la Inversión Ajustada por Volatilidad")
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.write("## Detalles de la Inversión")
+    st.write(f"- Volatilidad Anual: {volatilidad:.2f}%")
+    st.write(f"- Rendimiento Anual: {rendimiento_anual:.2f}%")
+    df_acciones = pd.DataFrame({'Acciones': acciones, 'Pesos (%)': pesos})
+    st.write("### Distribución de Acciones y Pesos")
+    st.table(df_acciones)
 
 
 
