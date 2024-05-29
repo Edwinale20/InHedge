@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 from streamlit_lottie import st_lottie
 import json
@@ -15,7 +14,7 @@ def load_lottiefile(filepath: str):
         return json.load(f)
 
 # Cargar la animación Lottie
-lottie_animation = load_lottiefile("ora.json")  # Asegúrate de tener un archivo Lottie JSON válido en el mismo directorio
+lottie_animation = load_lottiefile("inhedge.json")  # Asegúrate de tener un archivo Lottie JSON válido en el mismo directorio
 
 # Personalización de estilos y título
 st.markdown("""
@@ -53,6 +52,7 @@ mes_num = meses[mes_seleccionado]
 df_mes = df[df['Fecha'].dt.month == mes_num]
 precio_quinto_dia = df_mes.iloc[4]['LME Precio']
 tipo_cambio_quinto_dia = df_mes.iloc[4]['Tipo de cambio']
+precio_cme_quinto_dia = df_mes.iloc[4]['dolares cme']
 
 # Cálculos para la cobertura de aluminio
 contratos = monto_inversion / 25
@@ -81,23 +81,34 @@ for spot in precio_spot:
 
 resultados_df = pd.DataFrame(resultados_cobertura, columns=["Precio Spot", "Pérdida Máxima", "Ganancia Máxima", "Precio Strike", "Ganancia sin cobertura", "Resultado LME", "Ganancia con cobertura"])
 
-# Mostrar los resultados
-st.subheader("📈 Resultados de la Cobertura de Aluminio")
-st.write(f"Dólares cubiertos: ${dolares_cubiertos:,.2f} USD")
-st.write(f"Cantidad cubierta en pesos: ${cubiertos_pesos:,.2f} MXN")
-st.write(f"Fecha de compra: {df_mes.iloc[4]['Fecha'].date()}")
-st.write(f"Precio promedio del día: ${precio_quinto_dia:,.2f} USD")
-
+# Calcular la cobertura de tipo de cambio si el mes es múltiplo de 3
 if mes_num % 3 == 0:
-    contratos_fx = dolares_cubiertos / 500000
-    costo_total_cobertura_fx = contratos_fx * 500000
-    cubiertos_pesos_fx = dolares_cubiertos * tipo_cambio_quinto_dia
+    contratos_fx = cubiertos_pesos / 500000
+    dolares_cubiertos_fx = contratos_fx * 500000
+    costo_total_cobertura_fx = dolares_cubiertos_fx / tipo_cambio_quinto_dia
 
     # Añadir resultados de la cobertura del tipo de cambio
     st.write(f"Cobertura de tipo de cambio realizada en el mismo periodo.")
-    st.write(f"Dólares CME cubiertos: {contratos_fx:.2f} contratos")
+    st.write(f"Contratos FX comprados: {contratos_fx:.2f} contratos")
+    st.write(f"Dólares cubiertos FX: ${dolares_cubiertos_fx:,.2f} USD")
     st.write(f"Costo de Cobertura FX: ${costo_total_cobertura_fx:,.2f} USD")
-    st.write(f"Cantidad cubierta en pesos por FX: ${cubiertos_pesos_fx:,.2f} MXN")
+    st.write(f"Cantidad cubierta en pesos por FX: ${cubiertos_pesos:,.2f} MXN")
+
+    # Actualizar resultados de la cobertura para incluir la cobertura de tipo de cambio
+    resultados_cobertura_fx = []
+
+    for spot in precio_spot:
+        perdida_max = max(0, precio_strike - spot) * contratos * 25
+        ganancia_max = max(0, spot - precio_strike) * contratos * 25
+        ganancia_sin_cobertura = (spot - precio_venta) * contratos * 25
+        resultado_lme = (precio_venta - spot) * contratos * 25
+        ganancia_con_cobertura = ganancia_sin_cobertura + ganancia_max - perdida_max + (dolares_cubiertos_fx * tipo_cambio_quinto_dia)
+        resultados_cobertura_fx.append([spot, perdida_max, ganancia_max, precio_strike, ganancia_sin_cobertura, resultado_lme, ganancia_con_cobertura])
+
+    resultados_df_fx = pd.DataFrame(resultados_cobertura_fx, columns=["Precio Spot", "Pérdida Máxima", "Ganancia Máxima", "Precio Strike", "Ganancia sin cobertura", "Resultado LME", "Ganancia con cobertura"])
+
+    st.subheader("📊 Resultados de la Cobertura Actualizada con FX")
+    st.write(resultados_df_fx)
 
 # Mostrar tabla de resultados
 st.subheader("📊 Resultados de la Cobertura")
@@ -112,9 +123,9 @@ st.plotly_chart(fig, use_container_width=True)
 
 # Añadir resultados a la tabla con cobertura de tipo de cambio
 if mes_num % 3 == 0:
-    resultados_df["Dólares CME"] = contratos_fx
+    resultados_df["Dólares CME"] = dolares_cubiertos_fx
     resultados_df["Costo de Cobertura FX"] = costo_total_cobertura_fx
-    resultados_df["Cubiertos en Pesos FX"] = cubiertos_pesos_fx
+    resultados_df["Cubiertos en Pesos FX"] = cubiertos_pesos
 
 # Mostrar la tabla con los resultados actualizados
 st.write("## Resultados de la Cobertura Actualizada con FX")
