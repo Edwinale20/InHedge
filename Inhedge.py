@@ -69,33 +69,33 @@ else:
     precio_lme = precios_mes.iloc[4]['LME Precio']
     tipo_cambio = precios_mes.iloc[4]['Tipo de cambio']
     precio_cme = precios_mes.iloc[4]['dolares cme']
-    
-# Calcular la cantidad de contratos y costos
-contratos = monto_inversion / 25  # Cada contrato cubre 25 toneladas
-costo_total_mensual = contratos * precio_lme  # Costo mensual corregido
-costo_total_anual = costo_total_mensual * 12  # Costo anual
 
-# Calcular cantidad cubierta en pesos
-cubiertos_pesos = costo_total_mensual * precio_cme
+    # Calcular la cantidad de contratos y costos
+    contratos = monto_inversion / 25  # Cada contrato cubre 25 toneladas
+    costo_total_mensual = contratos * precio_lme  # Costo mensual corregido
+    costo_total_anual = costo_total_mensual * 12  # Costo anual
 
-# Generar la orden de compra de divisas si es un mes múltiplo de 3
-contratos_fx = 0
-costo_total_fx = 0
-if int(mes_seleccionado.split('-')[1]) % 3 == 0:
-    contratos_fx = int(cubiertos_pesos / 2 / 500000)  # Cada contrato de FX cubre 500,000 pesos
-    costo_total_fx = contratos_fx * 500000
+    # Calcular cantidad cubierta en pesos
+    cubiertos_pesos = contratos * precio_lme * 25 * tipo_cambio + precio_cme
 
-# Crear DataFrame combinado para todos los datos
-data = {
-    'Contratos': [f"{contratos:.2f}"],
-    'Costo total mensual': [f"${costo_total_mensual:,.2f} USD"],
-    'Pesos cubiertos': [f"${cubiertos_pesos:,.2f} MXN"],
-    'Contratos FX': [f"{contratos_fx}"],
-    'Costo total FX': [f"${costo_total_fx:,.2f} MXN"],
-    'Fecha de compra': [precios_mes.iloc[4]['Fecha'].strftime('%Y-%m-%d')],
-    'Precio promedio del día': [f"${precio_lme:,.2f} USD"]
-}
-df_combined = pd.DataFrame(data)
+    # Generar la orden de compra de divisas si es un mes múltiplo de 3
+    contratos_fx = 0
+    costo_total_fx = 0
+    if int(mes_seleccionado.split('-')[1]) % 3 == 0:
+        contratos_fx = int(cubiertos_pesos / 2 / 500000)  # Cada contrato de FX cubre 500,000 pesos
+        costo_total_fx = contratos_fx * 500000
+
+    # Crear DataFrame combinado para todos los datos
+    data = {
+        'Contratos': [f"{contratos:.2f}"],
+        'Costo total mensual': [f"${costo_total_mensual:,.2f} USD"],
+        'Pesos cubiertos': [f"${cubiertos_pesos:,.2f} MXN"],
+        'Contratos FX': [f"{contratos_fx}"],
+        'Costo total FX': [f"${costo_total_fx:,.2f} MXN"],
+        'Fecha de compra': [precios_mes.iloc[4]['Fecha'].strftime('%Y-%m-%d')],
+        'Precio promedio del día': [f"${precio_lme:,.2f} USD"]
+    }
+    df_combined = pd.DataFrame(data)
 
     st.subheader("Resumen de la Cobertura")
     st.table(df_combined)
@@ -222,3 +222,4 @@ df_combined = pd.DataFrame(data)
        - Se muestra una tabla con los resultados de la cobertura y una gráfica de barras comparando la pérdida y ganancia máxima.
        - Además, se muestra una tabla y gráfica de la cobertura de divisas, si aplica.
     """)
+
