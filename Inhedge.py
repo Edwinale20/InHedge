@@ -114,6 +114,11 @@ if st.button('Simular Estrategia'):
         st.write(f"**Dólares cubiertos:** ${dolares_cubiertos:,.2f} USD")
         st.write(f"**Cantidad cubierta en pesos:** ${cubiertos_pesos:,.2f} MXN")
         
+        # Mostrar la fecha de compra y el precio promedio del día
+        fecha_compra = precios_mes['Fecha'].iloc[0].strftime('%Y-%m-%d')
+        st.write(f"**Fecha de compra:** {fecha_compra}")
+        st.write(f"**Precio promedio del día:** ${precio_lme:,.2f} USD")
+        
         # Paso 7: Simulación de una orden de compra
         st.write("### Orden de Compra Generada")
         st.write("**Cantidad a cubrir:**")
