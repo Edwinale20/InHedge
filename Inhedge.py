@@ -57,9 +57,9 @@ tipo_cambio = precios_mes.iloc[4]['Tipo de cambio']
 precio_cme = precios_mes.iloc[4]['dolares cme']
 
 # Calcular la cantidad de contratos y costos
-contratos = monto_inversion / 25
-costo_total_mensual = contratos * precio_lme * 25
-costo_total_anual = costo_total_mensual * 12
+contratos = monto_inversion / 25  # Cada contrato cubre 25 toneladas
+costo_total_mensual = contratos * precio_lme * 25  # Costo mensual
+costo_total_anual = costo_total_mensual * 12  # Costo anual
 
 # Calcular cantidad cubierta en dólares y pesos
 dolares_cubiertos = contratos * precio_lme * 25
@@ -67,7 +67,7 @@ cubiertos_pesos = dolares_cubiertos * tipo_cambio
 
 # Generar la orden de compra de divisas si es un mes múltiplo de 3
 if int(mes_seleccionado.split('-')[1]) % 3 == 0:
-    contratos_fx = (cubiertos_pesos / 2) // 500000
+    contratos_fx = (cubiertos_pesos / 2) // 500000  # Cada contrato de FX cubre 500,000 pesos
     costo_total_fx = contratos_fx * 500000
     st.write(f"Contratos FX: {contratos_fx}, Costo total FX: {costo_total_fx}")
 
@@ -92,12 +92,12 @@ st.table(df_orden)
 # Crear DataFrame para resultados de la cobertura
 resultados = []
 for i in range(10):
-    spot = precio_lme + (i - 5) * 50
-    perdida_max = max(0, precio_lme - spot) * contratos * 25
-    ganancia_max = max(0, spot - precio_lme) * contratos * 25
-    ganancia_sin_cobertura = (spot - precio_lme) * contratos * 25
-    resultado_lme = ganancia_sin_cobertura - perdida_max
-    ganancia_con_cobertura = resultado_lme + ganancia_max - perdida_max
+    spot = precio_lme + (i - 5) * 50  # Ajustar el precio spot para generar diferentes escenarios
+    perdida_max = max(0, precio_lme - spot) * contratos * 25  # Pérdida máxima
+    ganancia_max = max(0, spot - precio_lme) * contratos * 25  # Ganancia máxima
+    ganancia_sin_cobertura = (spot - precio_lme) * contratos * 25  # Ganancia sin cobertura
+    resultado_lme = ganancia_sin_cobertura - perdida_max  # Resultado de la operación
+    ganancia_con_cobertura = resultado_lme + ganancia_max - perdida_max  # Ganancia con cobertura
     resultados.append([spot, perdida_max, ganancia_max, precio_lme, ganancia_sin_cobertura, resultado_lme, ganancia_con_cobertura])
 
 df_resultados = pd.DataFrame(resultados, columns=['Precio Spot', 'Pérdida Máxima', 'Ganancia Máxima', 'Precio Strike', 'Ganancia sin cobertura', 'Resultado LME', 'Ganancia con cobertura'])
@@ -109,4 +109,26 @@ st.table(df_resultados)
 df_grafica = df_resultados[['Pérdida Máxima', 'Ganancia Máxima']].melt(var_name='variable', value_name='value')
 fig = px.bar(df_grafica, x=df_grafica.index, y='value', color='variable', barmode='group', title="Pérdida y Ganancia Máxima")
 st.plotly_chart(fig, use_container_width=True)
+
+# Explicación del funcionamiento de la cobertura:
+st.write("""
+### Explicación del Funcionamiento de la Cobertura
+
+1. **Selección de Mes y Cantidad a Cubrir:**
+   - El usuario selecciona el mes y la cantidad de toneladas de aluminio que desea cubrir.
+
+2. **Cálculo de Contratos y Costos:**
+   - Se calcula la cantidad de contratos necesarios, dado que cada contrato de aluminio cubre 25 toneladas.
+   - Se calcula el costo total mensual y anual basado en el precio promedio del quinto día del mes seleccionado.
+
+3. **Cobertura de Divisas (Si Aplica):**
+   - Si el mes seleccionado es múltiplo de 3, se genera una orden de compra de divisas para cubrir la mitad de la cantidad cubierta en pesos.
+   - Cada contrato de divisas cubre 500,000 pesos.
+
+4. **Resultados de la Cobertura:**
+   - Se generan escenarios de precios spot para evaluar la pérdida y ganancia máxima, así como la ganancia sin cobertura, el resultado de la operación, y la ganancia con cobertura.
+
+5. **Visualización de Resultados:**
+   - Se muestra una tabla con los resultados de la cobertura y una gráfica de barras comparando la pérdida y ganancia máxima.
+""")
 
