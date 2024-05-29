@@ -44,8 +44,15 @@ with col2:  # Usar la columna central para los inputs
 st.session_state['monto_inversion'] = monto_inversion
 st.session_state['enfoque_inversion'] = enfoque_inversion
 
-# Cargar datos del CSV
-precios = pd.read_csv('/mnt/data/inhedge.csv', parse_dates=['Fecha'])
+# Intentar cargar datos del CSV
+try:
+    precios = pd.read_csv('inhedge.csv', parse_dates=['Fecha'])
+except FileNotFoundError:
+    st.error("El archivo 'inhedge.csv' no se encuentra en la ubicación especificada.")
+    st.stop()
+except Exception as e:
+    st.error(f"Se produjo un error al leer el archivo 'inhedge.csv': {e}")
+    st.stop()
 
 # Filtrar precios para el mes seleccionado
 mes_seleccionado = st.session_state['enfoque_inversion']
@@ -187,3 +194,4 @@ else:
        - Se muestra una tabla con los resultados de la cobertura y una gráfica de barras comparando la pérdida y ganancia máxima.
        - Además, se muestra una tabla y gráfica de la cobertura de divisas, si aplica.
     """)
+
