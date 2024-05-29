@@ -75,8 +75,8 @@ else:
     costo_total_mensual = contratos * precio_lme  # Costo mensual corregido
     costo_total_anual = costo_total_mensual * 12  # Costo anual
 
-    # Calcular cantidad cubierta en dólares y pesos
-    cubiertos_pesos = contratos * precio_lme * 25 * tipo_cambio
+    # Calcular cantidad cubierta en pesos
+    cubiertos_pesos = contratos * precio_lme * 25 * tipo_cambio + precio_cme
 
     # Generar la orden de compra de divisas si es un mes múltiplo de 3
     contratos_fx = 0
