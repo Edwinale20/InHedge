@@ -69,6 +69,7 @@ else:
     precio_lme = precios_mes.iloc[4]['LME Precio']
     tipo_cambio = precios_mes.iloc[4]['Tipo de cambio']
     precio_cme = precios_mes.iloc[4]['dolares cme']
+    
 # Calcular la cantidad de contratos y costos
 contratos = monto_inversion / 25  # Cada contrato cubre 25 toneladas
 costo_total_mensual = contratos * precio_lme  # Costo mensual corregido
@@ -95,7 +96,6 @@ data = {
     'Precio promedio del día': [f"${precio_lme:,.2f} USD"]
 }
 df_combined = pd.DataFrame(data)
-
 
     st.subheader("Resumen de la Cobertura")
     st.table(df_combined)
