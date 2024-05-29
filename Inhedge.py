@@ -15,7 +15,7 @@ def load_lottiefile(filepath: str):
         return json.load(f)
 
 # Cargar la animación Lottie
-lottie_animation = load_lottiefile("inhedge.json")  # Asegúrate de tener un archivo Lottie JSON válido en el mismo directorio
+lottie_animation = load_lottiefile("lol.json")  # Asegúrate de tener un archivo Lottie JSON válido en el mismo directorio
 
 # Personalización de estilos y título
 st.markdown("""
