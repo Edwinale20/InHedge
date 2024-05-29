@@ -45,7 +45,7 @@ st.session_state['monto_inversion'] = monto_inversion
 st.session_state['enfoque_inversion'] = enfoque_inversion
 
 # Cargar datos del CSV
-precios = pd.read_csv('inhedge.csv', parse_dates=['Fecha'])
+precios = pd.read_csv('/mnt/data/inhedge.csv', parse_dates=['Fecha'])
 
 # Filtrar precios para el mes seleccionado
 mes_seleccionado = st.session_state['enfoque_inversion']
@@ -140,15 +140,21 @@ else:
             ganancia_con_cobertura_fx = resultado_cme + ganancia_max_fx - perdida_max_fx  # Ganancia con cobertura
             resultados_fx.append([spot_fx, perdida_max_fx, ganancia_max_fx, precio_cme, ganancia_sin_cobertura_fx, resultado_cme, ganancia_con_cobertura_fx])
 
+    # Mostrar resultados_fx para depuración
+    st.write("Resultados de FX:", resultados_fx)
+
     df_resultados_fx = pd.DataFrame(resultados_fx, columns=['Precio Spot FX', 'Pérdida Máxima FX', 'Ganancia Máxima FX', 'Precio Strike FX', 'Ganancia sin cobertura FX', 'Resultado CME', 'Ganancia con cobertura FX'])
 
     st.subheader("Resultados de la Cobertura de Divisas")
     st.table(df_resultados_fx)
 
     # Gráfica de Pérdida y Ganancia Máxima de Divisas
-    df_grafica_fx = df_resultados_fx[['Pérdida Máxima FX', 'Ganancia Máxima FX']].melt(var_name='variable', value_name='value')
-    fig_fx = px.bar(df_grafica_fx, x=df_grafica_fx.index, y='value', color='variable', barmode='group', title="Pérdida y Ganancia Máxima de Divisas")
-    st.plotly_chart(fig_fx, use_container_width=True)
+    if not df_resultados_fx.empty:
+        df_grafica_fx = df_resultados_fx[['Pérdida Máxima FX', 'Ganancia Máxima FX']].melt(var_name='variable', value_name='value')
+        fig_fx = px.bar(df_grafica_fx, x=df_grafica_fx.index, y='value', color='variable', barmode='group', title="Pérdida y Ganancia Máxima de Divisas")
+        st.plotly_chart(fig_fx, use_container_width=True)
+    else:
+        st.write("No hay resultados de la cobertura de divisas para mostrar.")
 
     # Cargar la animación Lottie adicional
     lottie_tarjeta = load_lottiefile("tarjeta.json")
