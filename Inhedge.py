@@ -76,8 +76,7 @@ else:
     costo_total_anual = costo_total_mensual * 12  # Costo anual
 
     # Calcular cantidad cubierta en dólares y pesos
-    dolares_cubiertos = contratos * precio_lme * 25
-    cubiertos_pesos = dolares_cubiertos * tipo_cambio
+    cubiertos_pesos = contratos * precio_lme * 25 * tipo_cambio
 
     # Generar la orden de compra de divisas si es un mes múltiplo de 3
     contratos_fx = 0
@@ -90,7 +89,6 @@ else:
     data = {
         'Contratos': [f"{contratos:.2f}"],
         'Costo total mensual': [f"${costo_total_mensual:,.2f} USD"],
-        'Dólares cubiertos': [f"${dolares_cubiertos:,.2f} USD"],
         'Pesos cubiertos': [f"${cubiertos_pesos:,.2f} MXN"],
         'Contratos FX': [f"{contratos_fx}"],
         'Costo total FX': [f"${costo_total_fx:,.2f} MXN"],
@@ -125,6 +123,9 @@ else:
         resultados.append([spot, perdida_max, ganancia_max, precio_lme, ganancia_sin_cobertura, resultado_lme, ganancia_con_cobertura])
 
     df_resultados = pd.DataFrame(resultados, columns=['Precio Spot', 'Pérdida Máxima', 'Ganancia Máxima', 'Precio Strike', 'Ganancia sin cobertura', 'Resultado LME', 'Ganancia con cobertura'])
+
+    # Quitar los ceros después del punto decimal
+    df_resultados = df_resultados.round(2)
 
     st.subheader("Resultados de la Cobertura de Aluminio")
     st.table(df_resultados)
