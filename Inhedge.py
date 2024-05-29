@@ -1,4 +1,4 @@
-# Paso 1: Configurar la página y los estilos de Streamlit
+# Paso 1: Importar las librerías necesarias
 import streamlit as st
 import yfinance as yf
 import numpy as np
@@ -19,18 +19,21 @@ def load_lottiefile(filepath: str):
 # Cargar la animación Lottie
 lottie_animation = load_lottiefile("inhedge.json")  # Asegúrate de tener un archivo Lottie JSON válido en el mismo directorio
 
-# Mostrar la animación Lottie en la página
-st_lottie(lottie_animation, key='hedge_logo', height=300, width=300)
-
 # Personalización de estilos y título
 st.markdown("""
 <style>
 body { background-color: #EFEEE7; }
 .stButton>button { color: white; background-color: #2596be; }
 h1 { text-align: center; }
+#center_logo { display: flex; justify-content: center; }
 </style>
 <h1>📊 InHedge - Estrategias de Cobertura 📊</h1>
 """, unsafe_allow_html=True)
+
+# Mostrar la animación Lottie en el centro de la página
+st.markdown('<div id="center_logo">', unsafe_allow_html=True)
+st_lottie(lottie_animation, key='hedge_logo', height=300, width=300)
+st.markdown('</div>', unsafe_allow_html=True)
 
 # Paso 2: Crear un formulario centrado en la página principal para recoger información del usuario
 st.header("📈 Visualización de Estrategias de Cobertura")
@@ -114,7 +117,7 @@ if st.button('Simular Estrategia'):
     st.write("## 📈 Monto Acumulado en 2060")
     st.table(df_final)
 
-#Subpaso 6: Simulación ajustada por volatilidad
+# Subpaso 6: Simulación ajustada por volatilidad
 def calcular_crecimiento_inversion(aportacion_anual, rendimiento_anual, volatilidad):
     anos = list(range(2024, 2061))
     saldo = [aportacion_anual]  # Iniciar con la primera aportación anual
