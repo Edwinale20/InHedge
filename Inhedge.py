@@ -33,7 +33,7 @@ with col2:
     st_lottie(lottie_animation, key='hedge_logo', height=300, width=300)
 
 # Paso 2: Crear un formulario centrado en la página principal para recoger información del usuario
-st.header("📈 Visualización de Estrategias de Cobertura")
+st.header("📈 Visualización de Estrategias de Cobertura Collar")
 col1, col2, col3 = st.columns([1, 1, 1])
 
 with col2:  # Usar la columna central para los inputs
@@ -72,7 +72,7 @@ else:
 
     # Calcular la cantidad de contratos y costos
     contratos = monto_inversion / 25  # Cada contrato cubre 25 toneladas
-    costo_total_mensual = contratos * precio_lme * 25  # Costo mensual
+    costo_total_mensual = contratos * precio_lme  # Costo mensual corregido
     costo_total_anual = costo_total_mensual * 12  # Costo anual
 
     # Calcular cantidad cubierta en dólares y pesos
@@ -221,4 +221,3 @@ else:
        - Se muestra una tabla con los resultados de la cobertura y una gráfica de barras comparando la pérdida y ganancia máxima.
        - Además, se muestra una tabla y gráfica de la cobertura de divisas, si aplica.
     """)
-
