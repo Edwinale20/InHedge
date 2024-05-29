@@ -25,24 +25,19 @@ st.markdown("""
 body { background-color: #EFEEE7; }
 .stButton>button { color: white; background-color: #2596be; }
 h1 { text-align: center; }
-#center_logo {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 300px; /* Ajusta la altura según sea necesario */
-}
 </style>
 <h1>📊 InHedge - Estrategias de Cobertura 📊</h1>
 """, unsafe_allow_html=True)
 
-# Mostrar la animación Lottie en el centro de la página
-st.markdown('<div id="center_logo">', unsafe_allow_html=True)
-st_lottie(lottie_animation, key='hedge_logo', height=300, width=300)
-st.markdown('</div>', unsafe_allow_html=True)
+# Mostrar la animación Lottie en el centro de la página usando columnas
+col1, col2, col3 = st.columns([1, 2, 1])
+
+with col2:
+    st_lottie(lottie_animation, key='hedge_logo', height=300, width=300)
 
 # Paso 2: Crear un formulario centrado en la página principal para recoger información del usuario
 st.header("📈 Visualización de Estrategias de Cobertura")
-col1, col2, col3 = st.columns([1,1,1])
+col1, col2, col3 = st.columns([1, 1, 1])
 
 with col2:  # Usar la columna central para los inputs
     monto_inversion = st.number_input("💲 Cantidad a invertir inicialmente:", min_value=0, step=1000, key="inversion")
@@ -151,3 +146,4 @@ if submitted:
     df_acciones = pd.DataFrame({'Acciones': acciones, 'Pesos (%)': pesos})
     st.write("### Distribución de Acciones y Pesos")
     st.table(df_acciones)
+
