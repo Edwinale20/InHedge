@@ -128,6 +128,16 @@ df_resultados_fx = pd.DataFrame(resultados_fx, columns=['Precio Spot FX', 'Pérd
 st.subheader("Resultados de la Cobertura de Divisas")
 st.table(df_resultados_fx)
 
+# Cargar la animación Lottie adicional
+lottie_tarjeta = load_lottiefile("tarjeta.json")
+
+# Mostrar la animación Lottie adicional en el centro de la página usando columnas
+col1, col2, col3 = st.columns([1, 2, 1])
+
+with col2:
+    st_lottie(lottie_tarjeta, key='tarjeta', height=300, width=300)
+
+
 # Gráfica de Pérdida y Ganancia Máxima de Divisas
 df_grafica_fx = df_resultados_fx[['Pérdida Máxima FX', 'Ganancia Máxima FX']].melt(var_name='variable', value_name='value')
 fig_fx = px.bar(df_grafica_fx, x=df_grafica_fx.index, y='value', color='variable', barmode='group', title="Pérdida y Ganancia Máxima de Divisas")
@@ -156,12 +166,4 @@ st.write("""
    - Además, se muestra una tabla y gráfica de la cobertura de divisas, si aplica.
 """)
 
-# Cargar la animación Lottie adicional
-lottie_tarjeta = load_lottiefile("tarjeta.json")
-
-# Mostrar la animación Lottie adicional en el centro de la página usando columnas
-col1, col2, col3 = st.columns([1, 2, 1])
-
-with col2:
-    st_lottie(lottie_tarjeta, key='tarjeta', height=300, width=300)
 
