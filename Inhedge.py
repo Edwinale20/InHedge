@@ -8,7 +8,7 @@ from streamlit_lottie import st_lottie
 import json
 
 # Configuración de la página
-st.set_page_config(page_title="📊 InHedge App - Estrategias de Cobertura", page_icon="📊", layout="wide")
+st.set_page_config(page_title="📊 InHedge - Estrategias de Cobertura", page_icon="📊", layout="wide")
 
 # Función para cargar una animación Lottie desde un archivo JSON
 @st.cache_data
@@ -25,15 +25,20 @@ st.markdown("""
 body { background-color: #EFEEE7; }
 .stButton>button { color: white; background-color: #2596be; }
 h1 { text-align: center; }
+#center_logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 400px; /* Ajusta la altura según sea necesario */
+}
 </style>
 <h1>📊 InHedge - Estrategias de Cobertura 📊</h1>
 """, unsafe_allow_html=True)
 
 # Mostrar la animación Lottie en el centro de la página usando columnas
-col1, col2, col3 = st.columns([1, 2, 1])
-
-with col2:
-    st_lottie(lottie_animation, key='hedge_logo', height=300, width=300)
+st.markdown('<div id="center_logo">', unsafe_allow_html=True)
+st_lottie(lottie_animation, key='hedge_logo', height=300, width=300)
+st.markdown('</div>', unsafe_allow_html=True)
 
 # Paso 2: Crear un formulario centrado en la página principal para recoger información del usuario
 st.header("📈 Visualización de Estrategias de Cobertura")
