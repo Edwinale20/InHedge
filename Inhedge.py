@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from streamlit_lottie import st_lottie
-import json
 
 # Configuración de la página
 st.set_page_config(page_title="📊 InHedge - Estrategias de Cobertura", page_icon="📊", layout="wide")
@@ -10,6 +9,7 @@ st.set_page_config(page_title="📊 InHedge - Estrategias de Cobertura", page_ic
 # Función para cargar la animación Lottie desde un archivo JSON
 @st.cache_data
 def load_lottiefile(filepath: str):
+    import json
     with open(filepath, "r") as f:
         return json.load(f)
 
@@ -51,19 +51,13 @@ precios = pd.read_csv('inhedge.csv', parse_dates=['Fecha'])
 mes_seleccionado = st.session_state['enfoque_inversion']
 precios_mes = precios[(precios['Fecha'].dt.strftime('%Y-%m') == mes_seleccionado)]
 
-# Obtener el precio promedio del quinto día del mes y un mes después
+# Mostrar precios filtrados para depuración
+st.write("Precios del mes seleccionado:", precios_mes)
+
+# Obtener el precio promedio del quinto día del mes
 precio_lme = precios_mes.iloc[4]['LME Precio']
 tipo_cambio = precios_mes.iloc[4]['Tipo de cambio']
 precio_cme = precios_mes.iloc[4]['dolares cme']
-
-# Filtrar precios para el mes siguiente
-mes_siguiente = (precios['Fecha'].dt.to_period('M') + 1).astype(str)
-precios_mes_siguiente = precios[(precios['Fecha'].dt.strftime('%Y-%m') == mes_siguiente.iloc[4])]
-
-# Obtener el precio promedio del quinto día del mes siguiente
-precio_lme_siguiente = precios_mes_siguiente.iloc[4]['LME Precio']
-tipo_cambio_siguiente = precios_mes_siguiente.iloc[4]['Tipo de cambio']
-precio_cme_siguiente = precios_mes_siguiente.iloc[4]['dolares cme']
 
 # Calcular la cantidad de contratos y costos
 contratos = monto_inversion / 25  # Cada contrato cubre 25 toneladas
@@ -74,12 +68,22 @@ costo_total_anual = costo_total_mensual * 12  # Costo anual
 dolares_cubiertos = contratos * precio_lme * 25
 cubiertos_pesos = dolares_cubiertos * tipo_cambio
 
+# Mostrar valores intermedios para depuración
+st.write(f"Contratos: {contratos}")
+st.write(f"Costo total mensual: {costo_total_mensual}")
+st.write(f"Dólares cubiertos: {dolares_cubiertos}")
+st.write(f"Pesos cubiertos: {cubiertos_pesos}")
+
 # Generar la orden de compra de divisas si es un mes múltiplo de 3
 contratos_fx = 0
 costo_total_fx = 0
 if int(mes_seleccionado.split('-')[1]) % 3 == 0:
     contratos_fx = (cubiertos_pesos / 2) // 500000  # Cada contrato de FX cubre 500,000 pesos
     costo_total_fx = contratos_fx * 500000
+
+# Mostrar valores de FX para depuración
+st.write(f"Contratos FX: {contratos_fx}")
+st.write(f"Costo total FX: {costo_total_fx}")
 
 # Mostrar información de la operación
 st.subheader("Cantidad Cubierta")
@@ -134,10 +138,42 @@ if contratos_fx > 0:
 
 df_resultados_fx = pd.DataFrame(resultados_fx, columns=['Precio Spot FX', 'Pérdida Máxima FX', 'Ganancia Máxima FX', 'Precio Strike FX', 'Ganancia sin cobertura FX', 'Resultado CME', 'Ganancia con cobertura FX'])
 
-st.subheader("Resultados de la Cobertura Actualizada con FX")
+st.subheader("Resultados de la Cobertura de Divisas")
 st.table(df_resultados_fx)
 
 # Gráfica de Pérdida y Ganancia Máxima de Divisas
 df_grafica_fx = df_resultados_fx[['Pérdida Máxima FX', 'Ganancia Máxima FX']].melt(var_name='variable', value_name='value')
-fig_fx = px.bar(df_grafica_fx, x=df_grafica_fx.index, y='value', color='variable', barmode='group', title="Pérdida y Ganancia Máxima FX")
+fig_fx = px.bar(df_grafica_fx, x=df_grafica_fx.index, y='value', color='variable', barmode='group', title="Pérdida y Ganancia Máxima de Divisas")
 st.plotly_chart(fig_fx, use_container_width=True)
+
+# Cargar la animación Lottie adicional
+lottie_tarjeta = load_lottiefile("tarjeta.json")
+
+# Mostrar la animación Lottie adicional en el centro de la página usando columnas
+col1, col2, col3 = st.columns([1, 2, 1])
+
+with col2:
+    st_lottie(lottie_tarjeta, key='tarjeta', height=300, width=300)
+
+# Explicación del funcionamiento de la cobertura:
+st.write("""
+### Explicación del Funcionamiento de la Cobertura
+
+1. **Selección de Mes y Cantidad a Cubrir:**
+   - El usuario selecciona el mes y la cantidad de toneladas de aluminio que desea cubrir.
+
+2. **Cálculo de Contratos y Costos:**
+   - Se calcula la cantidad de contratos necesarios, dado que cada contrato de aluminio cubre 25 toneladas.
+   - Se calcula el costo total mensual y anual basado en el precio promedio del quinto día del mes seleccionado.
+
+3. **Cobertura de Divisas (Si Aplica):**
+   - Si el mes seleccionado es múltiplo de 3, se genera una orden de compra de divisas para cubrir la mitad de la cantidad cubierta en pesos.
+   - Cada contrato de divisas cubre 500,000 pesos.
+
+4. **Resultados de la Cobertura:**
+   - Se generan escenarios de precios spot para evaluar la pérdida y ganancia máxima, así como la ganancia sin cobertura, el resultado de la operación, y la ganancia con cobertura.
+
+5. **Visualización de Resultados:**
+   - Se muestra una tabla con los resultados de la cobertura y una gráfica de barras comparando la pérdida y ganancia máxima.
+   - Además, se muestra una tabla y gráfica de la cobertura de divisas, si aplica.
+""")
