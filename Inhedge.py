@@ -25,7 +25,12 @@ st.markdown("""
 body { background-color: #EFEEE7; }
 .stButton>button { color: white; background-color: #2596be; }
 h1 { text-align: center; }
-#center_logo { display: flex; justify-content: center; }
+#center_logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px; /* Ajusta la altura según sea necesario */
+}
 </style>
 <h1>📊 InHedge - Estrategias de Cobertura 📊</h1>
 """, unsafe_allow_html=True)
