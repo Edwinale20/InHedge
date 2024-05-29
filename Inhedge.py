@@ -79,12 +79,6 @@ else:
     dolares_cubiertos = contratos * precio_lme * 25
     cubiertos_pesos = dolares_cubiertos * tipo_cambio
 
-    # Mostrar valores intermedios para depuración
-    st.write(f"Contratos: {contratos}")
-    st.write(f"Costo total mensual: {costo_total_mensual}")
-    st.write(f"Dólares cubiertos: {dolares_cubiertos}")
-    st.write(f"Pesos cubiertos: {cubiertos_pesos}")
-
     # Generar la orden de compra de divisas si es un mes múltiplo de 3
     contratos_fx = 0
     costo_total_fx = 0
@@ -92,21 +86,26 @@ else:
         contratos_fx = int(cubiertos_pesos / 2 / 500000)  # Cada contrato de FX cubre 500,000 pesos
         costo_total_fx = contratos_fx * 500000
 
-    # Mostrar valores de FX para depuración
-    st.write(f"Contratos FX: {contratos_fx}")
-    st.write(f"Costo total FX: {costo_total_fx}")
+    # Crear DataFrame combinado para todos los datos
+    data = {
+        'Contratos': [f"{contratos:.2f}"],
+        'Costo total mensual': [f"${costo_total_mensual:,.2f} USD"],
+        'Dólares cubiertos': [f"${dolares_cubiertos:,.2f} USD"],
+        'Pesos cubiertos': [f"${cubiertos_pesos:,.2f} MXN"],
+        'Contratos FX': [f"{contratos_fx}"],
+        'Costo total FX': [f"${costo_total_fx:,.2f} MXN"],
+        'Fecha de compra': [precios_mes.iloc[4]['Fecha'].strftime('%Y-%m-%d')],
+        'Precio promedio del día': [f"${precio_lme:,.2f} USD"]
+    }
+    df_combined = pd.DataFrame(data)
 
-    # Mostrar información de la operación
-    st.subheader("Cantidad Cubierta")
-    st.write(f"Dólares cubiertos: ${dolares_cubiertos:.2f} USD")
-    st.write(f"Cantidad cubierta en pesos: ${cubiertos_pesos:.2f} MXN")
-    st.write(f"Fecha de compra: {precios_mes.iloc[4]['Fecha'].strftime('%Y-%m-%d')}")
-    st.write(f"Precio promedio del día: ${precio_lme:.2f} USD")
+    st.subheader("Resumen de la Cobertura")
+    st.table(df_combined)
 
     # Crear DataFrame para la orden de compra
     orden_compra = {
         'Cantidad a cubrir': [f"{monto_inversion} toneladas en {mes_seleccionado}"],
-        'Costo Total de la Cobertura': [f"${costo_total_mensual:.2f} USD"],
+        'Costo Total de la Cobertura': [f"${costo_total_mensual:,.2f} USD"],
         'Estado de la Orden': ['Confirmada']
     }
     df_orden = pd.DataFrame(orden_compra)
