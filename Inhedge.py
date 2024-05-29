@@ -146,10 +146,38 @@ else:
             ganancia_con_cobertura_fx = resultado_cme + ganancia_max_fx - perdida_max_fx  # Ganancia con cobertura
             resultados_fx.append([spot_fx, perdida_max_fx, ganancia_max_fx, precio_cme, ganancia_sin_cobertura_fx, resultado_cme, ganancia_con_cobertura_fx])
 
-    # Mostrar resultados_fx para depuración
-    st.write("Resultados de FX:", resultados_fx)
-
-    df_resultados_fx = pd.DataFrame(resultados_fx, columns=['Precio Spot FX', 'Pérdida Máxima FX', 'Ganancia Máxima FX', 'Precio Strike FX', 'Ganancia sin cobertura FX', 'Resultado CME', 'Ganancia con cobertura FX'])
+    # Formatear los resultados de FX para mejor visualización
+    if resultados_fx:
+        resultados_fx_formateados = [
+            [
+                f"${x[0]:,.2f}",
+                f"${x[1]:,.2f}",
+                f"${x[2]:,.2f}",
+                f"${x[3]:,.2f}",
+                f"${x[4]:,.2f}",
+                f"${x[5]:,.2f}",
+                f"${x[6]:,.2f}"
+            ] for x in resultados_fx
+        ]
+        df_resultados_fx = pd.DataFrame(resultados_fx_formateados, columns=[
+            'Precio Spot FX',
+            'Pérdida Máxima FX',
+            'Ganancia Máxima FX',
+            'Precio Strike FX',
+            'Ganancia sin cobertura FX',
+            'Resultado CME',
+            'Ganancia con cobertura FX'
+        ])
+    else:
+        df_resultados_fx = pd.DataFrame(columns=[
+            'Precio Spot FX',
+            'Pérdida Máxima FX',
+            'Ganancia Máxima FX',
+            'Precio Strike FX',
+            'Ganancia sin cobertura FX',
+            'Resultado CME',
+            'Ganancia con cobertura FX'
+        ])
 
     st.subheader("Resultados de la Cobertura de Divisas")
     st.table(df_resultados_fx)
@@ -193,4 +221,3 @@ else:
        - Se muestra una tabla con los resultados de la cobertura y una gráfica de barras comparando la pérdida y ganancia máxima.
        - Además, se muestra una tabla y gráfica de la cobertura de divisas, si aplica.
     """)
-
