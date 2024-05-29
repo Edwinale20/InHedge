@@ -64,7 +64,7 @@ costo_total_anual = costo_total_mensual * 12
 dolares_cubiertos = contratos * precio_lme * 25
 cubiertos_pesos = dolares_cubiertos * tipo_cambio
 
-# Generar la orden de compra de divisas
+# Generar la orden de compra de divisas si es un mes múltiplo de 3
 if int(mes_seleccionado.split('-')[1]) % 3 == 0:
     contratos_fx = (cubiertos_pesos / 2) // 500000
     costo_total_fx = contratos_fx * 500000
