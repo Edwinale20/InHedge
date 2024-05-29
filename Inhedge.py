@@ -221,3 +221,4 @@ else:
        - Se muestra una tabla con los resultados de la cobertura y una gráfica de barras comparando la pérdida y ganancia máxima.
        - Además, se muestra una tabla y gráfica de la cobertura de divisas, si aplica.
     """)
+
