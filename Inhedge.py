@@ -4,7 +4,7 @@ import plotly.express as px
 from streamlit_lottie import st_lottie
 
 # Configuración de la página
-st.set_page_config(page_title="📊 InHedge - Estrategias de Cobertura", page_icon="📊", layout="wide")
+st.set_page_config(page_title="InHedge - Estrategias de Cobertura", page_icon="📊", layout="wide")
 
 # Función para cargar la animación Lottie desde un archivo JSON
 @st.cache_data
